@@ -1,0 +1,16 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:16
+    container_name: eln_postgres
+    environment:
+      POSTGRES_DB: eln_db
+      POSTGRES_USER: eln_user
+      POSTGRES_PASSWORD: eln_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - eln_pgdata:/var/lib/postgresql/data
+
+volumes:
+  eln_pgdata:
