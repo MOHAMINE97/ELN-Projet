@@ -3,6 +3,7 @@ package com.eln.service;
 import com.eln.dto.EchantillonDTO;
 import com.eln.dto.EtapeProcedeDTO;
 import com.eln.dto.ResultatCaracterisationDTO;
+import com.eln.exception.ResourceNotFoundException;
 import com.eln.model.Echantillon;
 import com.eln.model.EtapeProcede;
 import com.eln.model.ResultatCaracterisation;
@@ -38,11 +39,11 @@ public class EchantillonService  {
 
     public EchantillonDTO.DetailResponse creer(EchantillonDTO.CreateRequest request, Long proprietaireId) {
         if (echantillonRepository.existsByReference(request.getReference())) {
-            throw new IllegalArgumentException("La référence '" + request.getReference() + "' existe déjà.");
+            throw new ResourceNotFoundException("La référence '" + request.getReference() + "' existe déjà.");
         }
 
         Utilisateur proprietaire = utilisateurRepository.findById(proprietaireId)
-                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable : id=" + proprietaireId));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : id=" + proprietaireId));
 
         Echantillon echantillon = new Echantillon();
         echantillon.setReference(request.getReference());
@@ -71,13 +72,13 @@ public class EchantillonService  {
     @Transactional(readOnly = true)
     public EchantillonDTO.DetailResponse obtenirDetail(Long id) {
         Echantillon echantillon = echantillonRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Échantillon introuvable : id=" + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Échantillon introuvable : id=" + id));
         return toDetailResponse(echantillon);
     }
 
     public EtapeProcedeDTO.Response ajouterEtape(Long echantillonId, EtapeProcedeDTO.Request request) {
         Echantillon echantillon = echantillonRepository.findById(echantillonId)
-                .orElseThrow(() -> new IllegalArgumentException("Échantillon introuvable : id=" + echantillonId));
+                .orElseThrow(() -> new ResourceNotFoundException("Échantillon introuvable : id=" + echantillonId));
 
         EtapeProcede etape = new EtapeProcede();
         etape.setType(request.getType());
@@ -96,7 +97,7 @@ public class EchantillonService  {
 
     public ResultatCaracterisationDTO.Response ajouterResultat(Long echantillonId, ResultatCaracterisationDTO.Request request) {
         Echantillon echantillon = echantillonRepository.findById(echantillonId)
-                .orElseThrow(() -> new IllegalArgumentException("Échantillon introuvable : id=" + echantillonId));
+                .orElseThrow(() -> new ResourceNotFoundException("Échantillon introuvable : id=" + echantillonId));
 
         ResultatCaracterisation resultat = new ResultatCaracterisation();
         resultat.setType(request.getType());
@@ -113,7 +114,7 @@ public class EchantillonService  {
 
     public void supprimer(Long id) {
         if (!echantillonRepository.existsById(id)) {
-            throw new IllegalArgumentException("Échantillon introuvable : id=" + id);
+            throw new ResourceNotFoundException("Échantillon introuvable : id=" + id);
         }
         echantillonRepository.deleteById(id);
     }
