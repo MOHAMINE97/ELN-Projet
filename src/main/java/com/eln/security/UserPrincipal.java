@@ -1,6 +1,6 @@
 package com.eln.security;
 
-import com.elnapi.eln_projet.model.Utilisateur;
+import com.eln.model.Utilisateur;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
