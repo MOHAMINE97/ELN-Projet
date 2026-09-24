@@ -1,0 +1,472 @@
+{
+  "info": {
+    "name": "ELN Backend - Tests bout en bout",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "password",
+      "value": "motdepasse123"
+    },
+    {
+      "key": "runId",
+      "value": ""
+    },
+    {
+      "key": "emailTech",
+      "value": ""
+    },
+    {
+      "key": "emailChercheur",
+      "value": ""
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "tokenChercheur",
+      "value": ""
+    },
+    {
+      "key": "echantillonId",
+      "value": ""
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Génère des données uniques au début de chaque run (1re requête)",
+          "if (pm.info.requestName.startsWith('1 - ')) {",
+          "  const id = Date.now();",
+          "  pm.collectionVariables.set('runId', id);",
+          "  pm.collectionVariables.set('emailTech', 'tech' + id + '@labo.fr');",
+          "  pm.collectionVariables.set('emailChercheur', 'chercheur' + id + '@labo.fr');",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "1 - Inscription TECHNICIEN",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/auth/register",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"email\": \"{{emailTech}}\", \"motDePasse\": \"{{password}}\", \"nom\": \"Test Technicien\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Statut 201', () => pm.response.to.have.status(201));",
+              "const d = pm.response.json();",
+              "pm.collectionVariables.set('token', d.token);",
+              "pm.test('Rôle TECHNICIEN par défaut', () => pm.expect(d.role).to.eql('TECHNICIEN'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "1bis - Inscription CHERCHEUR",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/auth/register",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"email\": \"{{emailChercheur}}\", \"motDePasse\": \"{{password}}\", \"nom\": \"Test Chercheur\", \"role\": \"CHERCHEUR\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Statut 201', () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set('tokenChercheur', pm.response.json().token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 - Connexion correcte",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"email\": \"{{emailTech}}\", \"motDePasse\": \"{{password}}\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Statut 200', () => pm.response.to.have.status(200));",
+              "pm.collectionVariables.set('token', pm.response.json().token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2bis - Connexion mauvais mot de passe",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"email\": \"{{emailTech}}\", \"motDePasse\": \"faux\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Statut 401 ou 403', () => pm.expect([401, 403]).to.include(pm.response.code));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3 - Créer échantillon SANS token",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/echantillons",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"reference\": \"NOPE-{{runId}}\", \"materiau\": \"SiC\", \"description\": \"ne doit pas passer\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Statut 401 ou 403', () => pm.expect([401, 403]).to.include(pm.response.code));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4 - Créer échantillon",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/echantillons",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"reference\": \"SIC-{{runId}}\", \"materiau\": \"SiC\", \"description\": \"Test découpe laser\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Statut 201', () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set('echantillonId', pm.response.json().id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5a - Ajouter une étape",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/echantillons/{{echantillonId}}/etapes",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"type\": \"GRAVURE_PLASMA\", \"dateExecution\": \"2026-09-19T10:00:00\", \"pressionMbar\": 0.05, \"puissancePlasmaWatts\": 150, \"dureeMinutes\": 12}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Statut 201', () => pm.response.to.have.status(201));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5b - Ajouter un résultat",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/echantillons/{{echantillonId}}/resultats",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"type\": \"EPAISSEUR\", \"dateMesure\": \"2026-09-19T14:00:00\", \"valeur\": 250.5, \"unite\": \"nm\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Statut 201', () => pm.response.to.have.status(201));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6 - Détail de l'échantillon",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/echantillons/{{echantillonId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Statut 200', () => pm.response.to.have.status(200));",
+              "const d = pm.response.json();",
+              "pm.test('etapes[] non vide', () => pm.expect(d.etapes.length).to.be.at.least(1));",
+              "pm.test('resultats[] non vide', () => pm.expect(d.resultats.length).to.be.at.least(1));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "7a - Mes échantillons (TECHNICIEN)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/echantillons/mine"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Statut 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "7b - Liste globale refusée (TECHNICIEN)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/echantillons"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Statut 403', () => pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "7c - Liste globale autorisée (CHERCHEUR)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{tokenChercheur}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/echantillons"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Statut 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "8a - Suppression refusée (TECHNICIEN)",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/echantillons/{{echantillonId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Statut 403', () => pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "8b - Suppression autorisée (CHERCHEUR)",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{tokenChercheur}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/echantillons/{{echantillonId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Statut 204', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "8c - Vérifier suppression",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{tokenChercheur}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/echantillons/{{echantillonId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Statut 404', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
