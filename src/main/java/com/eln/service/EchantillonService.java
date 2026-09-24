@@ -3,6 +3,7 @@ package com.eln.service;
 import com.eln.dto.EchantillonDTO;
 import com.eln.dto.EtapeProcedeDTO;
 import com.eln.dto.ResultatCaracterisationDTO;
+import com.eln.exception.DuplicateResourceException;
 import com.eln.exception.ResourceNotFoundException;
 import com.eln.model.Echantillon;
 import com.eln.model.EtapeProcede;
@@ -38,8 +39,12 @@ public class EchantillonService  {
     }
 
     public EchantillonDTO.DetailResponse creer(EchantillonDTO.CreateRequest request, Long proprietaireId) {
+//        if (echantillonRepository.existsByReference(request.getReference())) {
+//            throw new ResourceNotFoundException("La référence '" + request.getReference() + "' existe déjà.");
+//        }
+
         if (echantillonRepository.existsByReference(request.getReference())) {
-            throw new ResourceNotFoundException("La référence '" + request.getReference() + "' existe déjà.");
+            throw new DuplicateResourceException("La référence '" + request.getReference() + "' existe déjà.");
         }
 
         Utilisateur proprietaire = utilisateurRepository.findById(proprietaireId)

@@ -1,6 +1,7 @@
 package com.eln.service;
 
 import com.eln.dto.AuthDTO;
+import com.eln.exception.DuplicateResourceException;
 import com.eln.model.Enums.Role;
 import com.eln.model.Utilisateur;
 import com.eln.repository.UtilisateurRepository;
@@ -33,7 +34,7 @@ public class AuthService {
     @Transactional
     public AuthDTO.AuthResponse inscrire(AuthDTO.RegisterRequest request) {
         if (utilisateurRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Un compte existe déjà avec cet email.");
+            throw new DuplicateResourceException("Un compte existe déjà avec cet email.");
         }
 
         Utilisateur utilisateur = new Utilisateur();
