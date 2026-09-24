@@ -20,7 +20,6 @@ public class AuthDTO {
         @NotBlank
         private String nom;
 
-        // Optionnel : si absent, TECHNICIEN par défaut (voir AuthService)
         private Role role;
     }
 

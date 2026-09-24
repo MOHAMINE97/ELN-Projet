@@ -3,10 +3,12 @@ package com.eln.controller;
 import com.eln.dto.EchantillonDTO;
 import com.eln.dto.EtapeProcedeDTO;
 import com.eln.dto.ResultatCaracterisationDTO;
+import com.eln.security.UserPrincipal;
 import com.eln.service.EchantillonService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -22,23 +24,23 @@ public class EchantillonController {
         this.echantillonService = echantillonService;
     }
 
-    // NB : proprietaireId viendra plus tard du token JWT (utilisateur connecté)
-    // plutôt que d'un paramètre de requête — simplification temporaire pour cette étape.
     @PostMapping
     public ResponseEntity<EchantillonDTO.DetailResponse> creer(
             @Valid @RequestBody EchantillonDTO.CreateRequest request,
-            @RequestParam Long proprietaireId) {
-        EchantillonDTO.DetailResponse cree = echantillonService.creer(request, proprietaireId);
+            @AuthenticationPrincipal UserPrincipal utilisateur) {
+        EchantillonDTO.DetailResponse cree = echantillonService.creer(request, utilisateur.getId());
         return ResponseEntity.created(URI.create("/api/echantillons/" + cree.getId())).body(cree);
     }
 
     @GetMapping
-    public ResponseEntity<List<EchantillonDTO.SummaryResponse>> listerTous(
-            @RequestParam(required = false) Long proprietaireId) {
-        List<EchantillonDTO.SummaryResponse> resultats = (proprietaireId != null)
-                ? echantillonService.listerParProprietaire(proprietaireId)
-                : echantillonService.listerTous();
-        return ResponseEntity.ok(resultats);
+    public ResponseEntity<List<EchantillonDTO.SummaryResponse>> listerTous() {
+        return ResponseEntity.ok(echantillonService.listerTous());
+    }
+
+    @GetMapping("/mine")
+    public ResponseEntity<List<EchantillonDTO.SummaryResponse>> mesEchantillons(
+            @AuthenticationPrincipal UserPrincipal utilisateur) {
+        return ResponseEntity.ok(echantillonService.listerParProprietaire(utilisateur.getId()));
     }
 
     @GetMapping("/{id}")
