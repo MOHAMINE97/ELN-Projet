@@ -4,6 +4,8 @@ import com.eln.security.CustomUserDetailsService;
 import com.eln.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -36,14 +38,16 @@ public class SecurityConfig {
                 // API stateless : pas de session HTTP, chaque requête porte son propre token JWT
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR).permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        // Suppression réservée aux ADMIN et CHERCHEUR (pas au simple TECHNICIEN)
-                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/echantillons/**")
-                        .hasAnyRole("ADMIN", "CHERCHEUR")
+                        .requestMatchers(HttpMethod.GET, "/api/echantillons").hasAnyRole("ADMIN", "CHERCHEUR")
+                        .requestMatchers(HttpMethod.DELETE, "/api/echantillons/**").hasAnyRole("ADMIN", "CHERCHEUR")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
-                .authenticationProvider(authenticationProvider())
+                .exceptionHandling(e -> e.authenticationEntryPoint(
+                        new org.springframework.security.web.authentication.HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

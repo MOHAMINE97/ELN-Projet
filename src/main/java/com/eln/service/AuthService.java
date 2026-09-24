@@ -40,8 +40,8 @@ public class AuthService {
         utilisateur.setEmail(request.getEmail());
         utilisateur.setMotDePasseHash(passwordEncoder.encode(request.getMotDePasse()));
         utilisateur.setNom(request.getNom());
-        // Rôle par défaut TECHNICIEN si non précisé : évite qu'un utilisateur s'auto-déclare ADMIN à l'inscription
-        utilisateur.setRole(request.getRole() != null ? request.getRole() : Role.TECHNICIEN);
+        // Tout nouveau compte est TECHNICIEN ; seul un ADMIN peut changer un rôle (AdminUtilisateurController)
+        utilisateur.setRole(Role.TECHNICIEN);
 
         Utilisateur sauvegarde = utilisateurRepository.save(utilisateur);
         UserPrincipal principal = new UserPrincipal(sauvegarde);
