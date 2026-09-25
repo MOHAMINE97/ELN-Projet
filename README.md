@@ -113,6 +113,16 @@ curl http://localhost:8080/api/echantillons/1 -H "Authorization: Bearer $TOKEN"
 - Gestion d'erreurs centralisée (`GlobalExceptionHandler`) avec réponses JSON structurées
 - **Authentification JWT complète** : inscription, connexion, filtre de vérification de token,
   protection des endpoints par rôle (`@PreAuthorize`, règles HTTP dans `SecurityConfig`)
+
+## Tests Postman
+
+1. Importer `postman/eln_postman_collection.json` dans Postman.
+2. Vérifier que `baseUrl` vaut `http://localhost:8081`.
+3. Créer l'admin de test une seule fois :
+   lancer la requête 0a, puis exécuter en SQL :
+   `UPDATE utilisateurs SET role = 'ADMIN' WHERE email = 'admin@labo.fr';`
+4. Lancer la collection avec le Collection Runner (28 tests).
+
 ## Prochaine étape
 
 Le front-end (Angular ou React) qui consomme cette API : formulaire de connexion stockant le
