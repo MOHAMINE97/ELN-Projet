@@ -6,6 +6,7 @@ import com.eln.dto.ResultatCaracterisationDTO;
 import com.eln.exception.DuplicateResourceException;
 import com.eln.exception.ResourceNotFoundException;
 import com.eln.model.Echantillon;
+import com.eln.model.Enums.Role;
 import com.eln.model.EtapeProcede;
 import com.eln.model.ResultatCaracterisation;
 import com.eln.model.Utilisateur;
@@ -13,6 +14,8 @@ import com.eln.repository.EchantillonRepository;
 import com.eln.repository.EtapeProcedeRepository;
 import com.eln.repository.ResultatCaracterisationRepository;
 import com.eln.repository.UtilisateurRepository;
+import com.eln.security.UserPrincipal;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,9 +42,6 @@ public class EchantillonService  {
     }
 
     public EchantillonDTO.DetailResponse creer(EchantillonDTO.CreateRequest request, Long proprietaireId) {
-//        if (echantillonRepository.existsByReference(request.getReference())) {
-//            throw new ResourceNotFoundException("La référence '" + request.getReference() + "' existe déjà.");
-//        }
 
         if (echantillonRepository.existsByReference(request.getReference())) {
             throw new DuplicateResourceException("La référence '" + request.getReference() + "' existe déjà.");
@@ -75,15 +75,18 @@ public class EchantillonService  {
     }
 
     @Transactional(readOnly = true)
-    public EchantillonDTO.DetailResponse obtenirDetail(Long id) {
+    public EchantillonDTO.DetailResponse obtenirDetail(Long id, UserPrincipal utilisateur) {
         Echantillon echantillon = echantillonRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Échantillon introuvable : id=" + id));
+        verifierAcces(echantillon, utilisateur);
         return toDetailResponse(echantillon);
     }
 
-    public EtapeProcedeDTO.Response ajouterEtape(Long echantillonId, EtapeProcedeDTO.Request request) {
+    public EtapeProcedeDTO.Response ajouterEtape(Long echantillonId, EtapeProcedeDTO.Request request,
+                                                 UserPrincipal utilisateur) {
         Echantillon echantillon = echantillonRepository.findById(echantillonId)
                 .orElseThrow(() -> new ResourceNotFoundException("Échantillon introuvable : id=" + echantillonId));
+        verifierAcces(echantillon,utilisateur);
 
         EtapeProcede etape = new EtapeProcede();
         etape.setType(request.getType());
@@ -100,9 +103,11 @@ public class EchantillonService  {
         return toEtapeResponse(sauvegarde);
     }
 
-    public ResultatCaracterisationDTO.Response ajouterResultat(Long echantillonId, ResultatCaracterisationDTO.Request request) {
+    public ResultatCaracterisationDTO.Response ajouterResultat(Long echantillonId, ResultatCaracterisationDTO.Request request,
+                                                                UserPrincipal utilisateur) {
         Echantillon echantillon = echantillonRepository.findById(echantillonId)
                 .orElseThrow(() -> new ResourceNotFoundException("Échantillon introuvable : id=" + echantillonId));
+        verifierAcces(echantillon, utilisateur);
 
         ResultatCaracterisation resultat = new ResultatCaracterisation();
         resultat.setType(request.getType());
@@ -122,6 +127,14 @@ public class EchantillonService  {
             throw new ResourceNotFoundException("Échantillon introuvable : id=" + id);
         }
         echantillonRepository.deleteById(id);
+    }
+
+    private void verifierAcces(Echantillon echantillon, UserPrincipal utilisateur) {
+        boolean privilegie = utilisateur.getRole() == Role.ADMIN || utilisateur.getRole() == Role.CHERCHEUR;
+        boolean proprietaire = echantillon.getProprietaire().getId().equals(utilisateur.getId());
+        if (!privilegie && !proprietaire) {
+            throw new AccessDeniedException("Accès refusé à cet échantillon.");
+        }
     }
 
     // --- Conversions entité -> DTO ---

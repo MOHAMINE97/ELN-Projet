@@ -44,22 +44,25 @@ public class EchantillonController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<EchantillonDTO.DetailResponse> obtenirDetail(@PathVariable Long id) {
-        return ResponseEntity.ok(echantillonService.obtenirDetail(id));
+    public ResponseEntity<EchantillonDTO.DetailResponse> obtenirDetail(
+            @PathVariable Long id, @AuthenticationPrincipal UserPrincipal utilisateur) {
+        return ResponseEntity.ok(echantillonService.obtenirDetail(id,utilisateur));
     }
 
     @PostMapping("/{id}/etapes")
     public ResponseEntity<EtapeProcedeDTO.Response> ajouterEtape(
             @PathVariable Long id,
-            @Valid @RequestBody EtapeProcedeDTO.Request request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(echantillonService.ajouterEtape(id, request));
+            @Valid @RequestBody EtapeProcedeDTO.Request request,
+            @AuthenticationPrincipal UserPrincipal utilisateur) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(echantillonService.ajouterEtape(id, request,utilisateur));
     }
 
     @PostMapping("/{id}/resultats")
     public ResponseEntity<ResultatCaracterisationDTO.Response> ajouterResultat(
             @PathVariable Long id,
-            @Valid @RequestBody ResultatCaracterisationDTO.Request request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(echantillonService.ajouterResultat(id, request));
+            @Valid @RequestBody ResultatCaracterisationDTO.Request request,
+            @AuthenticationPrincipal UserPrincipal utilisateur) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(echantillonService.ajouterResultat(id, request,utilisateur));
     }
 
     @DeleteMapping("/{id}")
