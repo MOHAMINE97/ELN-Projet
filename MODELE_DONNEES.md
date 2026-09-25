@@ -70,10 +70,15 @@ conditionne les droits d'accès côté API :
 
 - **TECHNICIEN** (rôle par défaut à l'inscription) : crée et consulte ses propres échantillons
   uniquement (`POST /api/echantillons`, `GET /api/echantillons/mine`).
-- **CHERCHEUR** / **ADMIN** : en plus, peuvent lister tous les échantillons
-  (`GET /api/echantillons`) et en supprimer (`DELETE /api/echantillons/{id}`).
-  Le mot de passe n'est jamais stocké en clair : `motDePasseHash` contient un hash BCrypt
-  (`PasswordEncoder` de Spring Security), généré à l'inscription et vérifié à la connexion.
+- **CHERCHEUR** / **ADMIN** : peuvent lister tous les échantillons
+  (`GET /api/echantillons`) 
+- **ADMIN** : peut en supprimer (`DELETE /api/echantillons/{id}`).
+
+Le contrôle d'accès est appliqué :
+* au niveau HTTP (@PreAuthorize + SecurityConfig)
+* au niveau métier (EchantillonService.verifierAcces)
+
+Le mot de passe n'est jamais stocké en clair : motDePasseHash contient un hash BCrypt.
 
 ## Évolutions possibles (V2)
 
@@ -82,8 +87,6 @@ conditionne les droits d'accès côté API :
 - Ajouter une entité `Commentaire` (relation N-N Utilisateur ↔ Échantillon) pour la collaboration.
 - Ajouter une entité `FichierJoint` générique si vous voulez attacher plusieurs fichiers par
   résultat plutôt qu'un seul chemin.
-- Restreindre `GET /api/echantillons/{id}` pour qu'un TECHNICIEN ne puisse consulter que ses
-  propres échantillons (actuellement ouvert à tout utilisateur authentifié, à affiner).
 ## État d'avancement du projet
 
 Fait :
@@ -91,11 +94,14 @@ Fait :
 2. Repositories Spring Data JPA.
 3. DTOs et service métier (`EchantillonService`).
 4. Contrôleur REST (`EchantillonController`) avec gestion d'erreurs centralisée.
-5. Authentification JWT complète (inscription, connexion, protection par rôle).
-   Prochaine étape :
-- Front-end (Angular ou React) consommant cette API : formulaire de connexion stockant le
-  token, liste des échantillons, formulaire de création avec ajout dynamique d'étapes.
- 
+5. Authentification JWT complète (inscription, connexion, protection par rôle). 
+6. Contrôle d'accès par propriétaire et hiérarchie de rôles.
+7. Clé JWT externalisée via variable d'environnement.
+8. Format d'erreur uniforme dans `GlobalExceptionHandler`.
+
+## Prochaine étape :
+- **Tests JUnit + Testcontainers**
+- **Front-end (Angular ou React)**
 
 
 
