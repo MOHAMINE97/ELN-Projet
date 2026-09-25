@@ -14,7 +14,7 @@ import java.util.function.Function;
 public class JwtService {
 
     // En production : à définir via variable d'environnement (JWT_SECRET), jamais en dur dans le code.
-    @Value("${jwt.secret:changez-moi-en-production-avec-une-cle-longue-et-aleatoire-256bits}")
+    @Value("${JWT_SECRET}")
     private String secret;
 
     @Value("${jwt.expiration-ms:86400000}") // 24h par défaut
